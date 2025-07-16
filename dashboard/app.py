@@ -444,28 +444,50 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
     recommendations = insights_generator.generate_strategic_recommendations()
     risks = insights_generator.generate_risk_assessment()
     
-    # Market insights summary
+    # Market insights summary with actionable data
     st.subheader("📊 Market Insights Summary")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric(
-            label="Emerging Genres",
-            value=len(market_insights['genre_insights'].get('emerging_genres', [])),
-            delta=None
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.subheader("🚀 Emerging Genres")
+        emerging_genres = market_insights['genre_insights'].get('emerging_genres', [])
+        if emerging_genres:
+            genre_trends = genre_analyzer.analyze_genre_trends()
+            for genre in emerging_genres[:3]:  # Show top 3
+                if not genre_trends.empty:
+                    recent_momentum = genre_trends[genre_trends['genre'] == genre]['momentum'].tail(4).mean()
+                    market_share = genre_trends[genre_trends['genre'] == genre]['market_share'].tail(4).mean()
+                    momentum_text = f"↑{abs(recent_momentum):.1f} momentum" if recent_momentum < 0 else f"↓{recent_momentum:.1f} momentum"
+                    st.markdown(f'''
+                    <div class="success-box">
+                        <strong>{genre}</strong><br>
+                        📈 {momentum_text}<br>
+                        📊 {market_share:.1%} market share
+                    </div>
+                    ''', unsafe_allow_html=True)
+        else:
+            st.info("No emerging genres identified")
     
     with col2:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric(
-            label="Declining Genres",
-            value=len(market_insights['genre_insights'].get('declining_genres', [])),
-            delta=None
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.subheader("📉 Declining Genres")
+        declining_genres = market_insights['genre_insights'].get('declining_genres', [])
+        if declining_genres:
+            genre_trends = genre_analyzer.analyze_genre_trends()
+            for genre in declining_genres[:3]:  # Show top 3
+                if not genre_trends.empty:
+                    recent_momentum = genre_trends[genre_trends['genre'] == genre]['momentum'].tail(4).mean()
+                    market_share = genre_trends[genre_trends['genre'] == genre]['market_share'].tail(4).mean()
+                    momentum_text = f"↓{recent_momentum:.1f} momentum" if recent_momentum > 0 else f"↑{abs(recent_momentum):.1f} momentum"
+                    st.markdown(f'''
+                    <div class="warning-box">
+                        <strong>{genre}</strong><br>
+                        📉 {momentum_text}<br>
+                        📊 {market_share:.1%} market share
+                    </div>
+                    ''', unsafe_allow_html=True)
+        else:
+            st.info("No declining genres identified")
     
     # Strategic recommendations with backing metrics
     st.subheader("🎯 Strategic Recommendations")
