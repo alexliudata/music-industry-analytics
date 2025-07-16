@@ -153,11 +153,12 @@ class SampleDataGenerator:
             ('Break My Soul', 'Beyoncé', 'Pop'),
             ('Unholy', 'Sam Smith & Kim Petras', 'Pop'),
             ('Hold On', 'Justin Bieber', 'Pop'),
+            ('Sunflower', 'Post Malone & Swae Lee', 'Pop'),
+            ('Congratulations', 'Post Malone ft. Quavo', 'Pop'),
             
             # Hip-Hop/Rap hits
             ('HUMBLE.', 'Kendrick Lamar', 'Hip-Hop/Rap'),
             ('God\'s Plan', 'Drake', 'Hip-Hop/Rap'),
-            ('Bad Guy', 'Billie Eilish', 'Hip-Hop/Rap'),
             ('The Box', 'Roddy Ricch', 'Hip-Hop/Rap'),
             ('Rockstar', 'DaBaby ft. Roddy Ricch', 'Hip-Hop/Rap'),
             ('Mood', '24kGoldn ft. Iann Dior', 'Hip-Hop/Rap'),
@@ -214,9 +215,9 @@ class SampleDataGenerator:
             ('El Apagón', 'Bad Bunny', 'Latin'),
             ('Andrea', 'Bad Bunny & Buscabulla', 'Latin'),
             
-            # Rock hits (more recent/current)
-            ('Running Up That Hill', 'Kate Bush', 'Rock'),
-            ('Master of Puppets', 'Metallica', 'Rock'),
+            # Rock hits (classics with modern resurgence)
+            ('Running Up That Hill', 'Kate Bush', 'Rock'),  # Stranger Things resurgence
+            ('Master of Puppets', 'Metallica', 'Rock'),     # Stranger Things resurgence
             ('Sweet Child O\' Mine', 'Guns N\' Roses', 'Rock'),
             ('Bohemian Rhapsody', 'Queen', 'Rock'),
             ('Hotel California', 'Eagles', 'Rock'),
@@ -228,11 +229,10 @@ class SampleDataGenerator:
             
             # Alternative hits
             ('Blinding Lights', 'The Weeknd', 'Alternative'),
+            ('Bad Guy', 'Billie Eilish', 'Alternative'),
             ('Circles', 'Post Malone', 'Alternative'),
-            ('Sunflower', 'Post Malone & Swae Lee', 'Alternative'),
             ('Better Now', 'Post Malone', 'Alternative'),
             ('Psycho', 'Post Malone ft. Ty Dolla $ign', 'Alternative'),
-            ('Congratulations', 'Post Malone ft. Quavo', 'Alternative'),
             ('I Fall Apart', 'Post Malone', 'Alternative'),
             ('White Iverson', 'Post Malone', 'Alternative'),
             ('Go Flex', 'Post Malone', 'Alternative'),
