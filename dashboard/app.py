@@ -70,6 +70,15 @@ st.markdown("""
         border: 1px solid #28a745;
         margin: 0.5rem 0;
     }
+    .tooltip {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -106,6 +115,16 @@ def initialize_analyzers(billboard_data, spotify_data):
     
     return genre_analyzer, artist_analyzer, audio_analyzer
 
+def filter_data_by_date_range(data, date_range):
+    """Filter data by selected date range."""
+    if len(date_range) == 2 and data is not None and not data.empty:
+        start_date, end_date = date_range
+        data['date'] = pd.to_datetime(data['date'])
+        filtered_data = data[(data['date'].dt.date >= start_date) & 
+                           (data['date'].dt.date <= end_date)]
+        return filtered_data
+    return data
+
 def main():
     """Main dashboard function."""
     
@@ -123,7 +142,7 @@ def main():
     # Sidebar
     st.sidebar.title("📊 Dashboard Controls")
     
-    # Date range selector
+    # Global date range selector (syncs across all tabs)
     st.sidebar.subheader("📅 Date Range")
     if not billboard_data.empty:
         # Convert string dates to datetime objects
@@ -135,8 +154,13 @@ def main():
             "Select date range",
             value=(min_date, max_date),
             min_value=min_date,
-            max_value=max_date
+            max_value=max_date,
+            help="This filter applies to all dashboard tabs"
         )
+        
+        # Filter data by date range
+        filtered_billboard = filter_data_by_date_range(billboard_data, date_range)
+        filtered_spotify = spotify_data  # Spotify data doesn't have dates, so keep as is
     
     # Genre filter
     st.sidebar.subheader("🎼 Genre Filter")
@@ -145,7 +169,8 @@ def main():
         selected_genres = st.sidebar.multiselect(
             "Select genres to analyze",
             options=available_genres,
-            default=available_genres[:5] if len(available_genres) >= 5 else available_genres
+            default=available_genres[:5] if len(available_genres) >= 5 else available_genres,
+            help="Filter analysis to specific genres"
         )
     
     # Main content tabs
@@ -158,26 +183,26 @@ def main():
     ])
     
     with tab1:
-        show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analyzer)
+        show_overview_tab(filtered_billboard, filtered_spotify, genre_analyzer, artist_analyzer, audio_analyzer)
     
     with tab2:
-        show_genre_analysis_tab(billboard_data, genre_analyzer)
+        show_genre_analysis_tab(filtered_billboard, genre_analyzer, audio_analyzer, artist_analyzer)
     
     with tab3:
-        show_artist_analysis_tab(billboard_data, artist_analyzer)
+        show_artist_analysis_tab(filtered_billboard, artist_analyzer, genre_analyzer, audio_analyzer)
     
     with tab4:
-        show_audio_features_tab(spotify_data, audio_analyzer)
+        show_audio_features_tab(filtered_spotify, audio_analyzer, genre_analyzer, artist_analyzer)
     
     with tab5:
         show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer)
 
-def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analyzer):
+def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analyzer, audio_analyzer):
     """Display overview dashboard."""
     
     st.header("📊 Market Overview")
     
-    # Key metrics
+    # Key metrics with tooltips
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -186,6 +211,7 @@ def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analy
             value=f"{len(billboard_data):,}",
             delta=f"+{len(billboard_data) - 1000:,}" if len(billboard_data) > 1000 else None
         )
+        st.markdown('<div class="tooltip">📊 Total number of chart entries in the selected date range</div>', unsafe_allow_html=True)
     
     with col2:
         st.metric(
@@ -193,6 +219,7 @@ def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analy
             value=f"{billboard_data['artist'].nunique():,}",
             delta=None
         )
+        st.markdown('<div class="tooltip">👤 Number of distinct artists with chart entries</div>', unsafe_allow_html=True)
     
     with col3:
         st.metric(
@@ -200,13 +227,17 @@ def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analy
             value=f"{billboard_data['genre'].nunique():,}",
             delta=None
         )
+        st.markdown('<div class="tooltip">🎼 Number of different music genres represented</div>', unsafe_allow_html=True)
     
     with col4:
-        st.metric(
-            label="Time Period",
-            value=f"{(pd.to_datetime(billboard_data['date'].max()) - pd.to_datetime(billboard_data['date'].min())).days} days",
-            delta=None
-        )
+        if not billboard_data.empty:
+            time_period = (pd.to_datetime(billboard_data['date'].max()) - pd.to_datetime(billboard_data['date'].min())).days
+            st.metric(
+                label="Time Period",
+                value=f"{time_period} days",
+                delta=None
+            )
+            st.markdown('<div class="tooltip">📅 Duration of the selected analysis period</div>', unsafe_allow_html=True)
     
     # Genre performance overview
     st.subheader("🎼 Genre Performance Overview")
@@ -216,7 +247,7 @@ def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analy
     
     if not genre_trends.empty:
         # Create genre trend chart
-        viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, None)
+        viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
         trend_fig = viz_generator.create_genre_trend_chart()
         st.plotly_chart(trend_fig, use_container_width=True)
         
@@ -234,63 +265,75 @@ def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analy
         top_songs = recent_data[recent_data['rank'] <= 10][['rank', 'title', 'artist', 'genre']].head(10)
         st.dataframe(top_songs, use_container_width=True)
 
-def show_genre_analysis_tab(billboard_data, genre_analyzer):
+def show_genre_analysis_tab(billboard_data, genre_analyzer, audio_analyzer, artist_analyzer):
     """Display genre analysis."""
     
     st.header("🎼 Genre Trend Analysis")
     
-    # Analyze genre trends
-    genre_trends = genre_analyzer.analyze_genre_trends()
+    # Emerging vs declining genres with explanation
+    col1, col2 = st.columns(2)
     
-    if not genre_trends.empty:
-        # Emerging vs declining genres
-        col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("🚀 Emerging Genres")
+        st.markdown('<div class="tooltip">📈 Genres showing positive momentum (improving average rank over time)</div>', unsafe_allow_html=True)
         
-        with col1:
-            st.subheader("🚀 Emerging Genres")
-            emerging_genres = genre_analyzer.identify_emerging_genres()
-            
-            if emerging_genres:
-                for genre in emerging_genres:
-                    st.markdown(f'<div class="success-box">✅ <strong>{genre}</strong> - Showing positive momentum</div>', 
+        emerging_genres = genre_analyzer.identify_emerging_genres()
+        
+        if emerging_genres:
+            for genre in emerging_genres:
+                # Get momentum value for display
+                genre_trends = genre_analyzer.analyze_genre_trends()
+                if not genre_trends.empty:
+                    recent_momentum = genre_trends[genre_trends['genre'] == genre]['momentum'].tail(4).mean()
+                    momentum_text = f"↑{abs(recent_momentum):.1f} momentum" if recent_momentum < 0 else f"↓{recent_momentum:.1f} momentum"
+                    st.markdown(f'<div class="success-box">✅ <strong>{genre}</strong> - {momentum_text}</div>', 
                                unsafe_allow_html=True)
-            else:
-                st.info("No emerging genres identified in the current data.")
+        else:
+            st.info("No emerging genres identified in the current data.")
+    
+    with col2:
+        st.subheader("📉 Declining Genres")
+        st.markdown('<div class="tooltip">📉 Genres showing negative momentum (worsening average rank over time)</div>', unsafe_allow_html=True)
         
-        with col2:
-            st.subheader("📉 Declining Genres")
-            declining_genres = genre_analyzer.identify_declining_genres()
-            
-            if declining_genres:
-                for genre in declining_genres:
-                    st.markdown(f'<div class="warning-box">⚠️ <strong>{genre}</strong> - Showing negative momentum</div>', 
+        declining_genres = genre_analyzer.identify_declining_genres()
+        
+        if declining_genres:
+            for genre in declining_genres:
+                # Get momentum value for display
+                genre_trends = genre_analyzer.analyze_genre_trends()
+                if not genre_trends.empty:
+                    recent_momentum = genre_trends[genre_trends['genre'] == genre]['momentum'].tail(4).mean()
+                    momentum_text = f"↓{recent_momentum:.1f} momentum" if recent_momentum > 0 else f"↑{abs(recent_momentum):.1f} momentum"
+                    st.markdown(f'<div class="warning-box">⚠️ <strong>{genre}</strong> - {momentum_text}</div>', 
                                unsafe_allow_html=True)
-            else:
-                st.info("No declining genres identified in the current data.")
-        
-        # Genre insights
-        st.subheader("📊 Genre Insights")
-        genre_insights = genre_analyzer.get_genre_insights()
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**Top Performing Genres (by average rank):**")
-            for genre, rank in list(genre_insights.get('top_genres', {}).items())[:5]:
-                st.write(f"• {genre}: {rank:.1f}")
-        
-        with col2:
-            st.write("**Market Share Leaders:**")
-            for genre, share in list(genre_insights.get('market_leaders', {}).items())[:5]:
-                st.write(f"• {genre}: {share:.1%}")
-        
-        # Genre trend visualization
+        else:
+            st.info("No declining genres identified in the current data.")
+    
+    # Genre insights with clarified metrics
+    st.subheader("📊 Genre Insights")
+    genre_insights = genre_analyzer.get_genre_insights()
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.write("**Top Performing Genres (by average rank):**")
+        st.markdown('<div class="tooltip">🏆 Lower average rank = better performance (rank 1 is best)</div>', unsafe_allow_html=True)
+        for genre, rank in list(genre_insights.get('top_genres', {}).items())[:5]:
+            st.write(f"• {genre}: {rank:.1f} (avg rank)")
+    
+    with col2:
+        st.write("**Market Share Leaders:**")
+        st.markdown('<div class="tooltip">📊 Percentage of total chart entries by genre</div>', unsafe_allow_html=True)
+        for genre, share in list(genre_insights.get('market_leaders', {}).items())[:5]:
+            st.write(f"• {genre}: {share:.1%}")
+    
+            # Genre trend visualization
         st.subheader("📈 Genre Performance Trends")
-        viz_generator = VisualizationGenerator(genre_analyzer, None, None)
+        viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
         trend_fig = viz_generator.create_genre_trend_chart()
         st.plotly_chart(trend_fig, use_container_width=True)
 
-def show_artist_analysis_tab(billboard_data, artist_analyzer):
+def show_artist_analysis_tab(billboard_data, artist_analyzer, genre_analyzer, audio_analyzer):
     """Display artist analysis."""
     
     st.header("👤 Artist Performance Analysis")
@@ -314,25 +357,28 @@ def show_artist_analysis_tab(billboard_data, artist_analyzer):
         top_artists = artist_analyzer.get_top_artists(selected_metric, 10)
         st.dataframe(top_artists[['artist', selected_metric, 'genre_diversity']], use_container_width=True)
         
-        # Rising artists
+        # Rising artists with explanation
         st.subheader("📈 Rising Artists")
+        st.markdown('<div class="tooltip">🚀 Artists with improving recent performance vs. overall average</div>', unsafe_allow_html=True)
+        
         rising_artists = artist_analyzer.get_rising_artists()
         
         if not rising_artists.empty:
             st.write("Artists with strong positive momentum:")
             for _, artist in rising_artists.head(5).iterrows():
-                st.markdown(f'<div class="success-box">🚀 <strong>{artist["artist"]}</strong> - Momentum: {artist["momentum"]:.1f}</div>', 
+                momentum_text = f"↑{artist['momentum']:.1f} rank improvement" if artist['momentum'] > 0 else f"↓{abs(artist['momentum']):.1f} rank decline"
+                st.markdown(f'<div class="success-box">🚀 <strong>{artist["artist"]}</strong> - {momentum_text}</div>', 
                            unsafe_allow_html=True)
         else:
             st.info("No rising artists identified in the current data.")
         
         # Artist performance visualization
         st.subheader("📊 Artist Performance Scatter Plot")
-        viz_generator = VisualizationGenerator(None, artist_analyzer, None)
+        viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
         artist_fig = viz_generator.create_artist_performance_chart()
         st.plotly_chart(artist_fig, use_container_width=True)
 
-def show_audio_features_tab(spotify_data, audio_analyzer):
+def show_audio_features_tab(spotify_data, audio_analyzer, genre_analyzer, artist_analyzer):
     """Display audio features analysis."""
     
     st.header("🎵 Audio Features Analysis")
@@ -345,14 +391,18 @@ def show_audio_features_tab(spotify_data, audio_analyzer):
         if not genre_features.empty:
             st.dataframe(genre_features.round(3), use_container_width=True)
             
-            # Feature correlation heatmap
+            # Feature correlation heatmap with legend
             st.subheader("🔥 Audio Features Correlation")
-            viz_generator = VisualizationGenerator(None, None, audio_analyzer)
+            st.markdown('<div class="tooltip">🔴 Red = negative correlation, 🔵 Blue = positive correlation, ⚪ White = no correlation</div>', unsafe_allow_html=True)
+            
+            viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
             heatmap_fig = viz_generator.create_audio_features_heatmap()
             st.plotly_chart(heatmap_fig, use_container_width=True)
         
-        # Optimal features for popularity
+        # Optimal features for popularity with explanation
         st.subheader("⭐ Optimal Features for High Popularity")
+        st.markdown('<div class="tooltip">📊 Based on mean ± std of top 10% most popular songs</div>', unsafe_allow_html=True)
+        
         optimal_features = audio_analyzer.identify_optimal_features()
         
         if optimal_features:
@@ -417,7 +467,7 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
         )
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Strategic recommendations
+    # Strategic recommendations with backing metrics
     st.subheader("🎯 Strategic Recommendations")
     
     if recommendations:
@@ -427,6 +477,32 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
                 'medium': 'insight-box',
                 'low': 'warning-box'
             }.get(rec['priority'], 'insight-box')
+            
+            # Add backing metrics for emerging genres recommendation
+            if 'emerging' in rec['title'].lower() and 'genre' in rec['title'].lower():
+                emerging_genres = market_insights['genre_insights'].get('emerging_genres', [])
+                if emerging_genres:
+                    genre_trends = genre_analyzer.analyze_genre_trends()
+                    metrics_text = ""
+                    for genre in emerging_genres[:3]:  # Show top 3
+                        if not genre_trends.empty:
+                            recent_momentum = genre_trends[genre_trends['genre'] == genre]['momentum'].tail(4).mean()
+                            market_share = genre_trends[genre_trends['genre'] == genre]['market_share'].tail(4).mean()
+                            metrics_text += f"<br>• <strong>{genre}</strong>: ↑{abs(recent_momentum):.1f} momentum, {market_share:.1%} market share"
+                    
+                    if metrics_text:
+                        rec['description'] += f"<br><br><strong>Supporting Data:</strong>{metrics_text}"
+            
+            # Add backing metrics for rising artists recommendation
+            elif 'rising' in rec['title'].lower() and 'artist' in rec['title'].lower():
+                rising_artists = artist_analyzer.get_rising_artists()
+                if not rising_artists.empty:
+                    metrics_text = "<br><br><strong>Top Rising Artists:</strong>"
+                    for _, artist in rising_artists.head(3).iterrows():
+                        momentum_text = f"↑{artist['momentum']:.1f} rank improvement" if artist['momentum'] > 0 else f"↓{abs(artist['momentum']):.1f} rank decline"
+                        metrics_text += f"<br>• <strong>{artist['artist']}</strong>: {momentum_text}"
+                    
+                    rec['description'] += metrics_text
             
             st.markdown(f'''
             <div class="{priority_color}">
