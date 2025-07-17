@@ -288,31 +288,93 @@ def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analy
             )
             st.markdown('<div class="tooltip">📅 Duration of the selected analysis period</div>', unsafe_allow_html=True)
     
-    # Genre performance overview
+    # Genre performance overview with improved spacing
     st.subheader("🎼 Genre Performance Overview")
     
     # Analyze genre trends
     genre_trends = genre_analyzer.analyze_genre_trends()
     
     if not genre_trends.empty:
-        # Create genre trend chart
+        # Create genre trend chart with clarification
+        st.markdown('<div class="tooltip">📈 Average chart position across all songs in the genre, lower is better (rank 1 = #1 on Billboard Hot 100)</div>', unsafe_allow_html=True)
+        
         viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
         trend_fig = viz_generator.create_genre_trend_chart()
         st.plotly_chart(trend_fig, use_container_width=True)
         
-        # Market share chart
-        market_fig = viz_generator.create_market_share_chart()
-        st.plotly_chart(market_fig, use_container_width=True)
+        # Market share chart with toggle and enhanced tooltips
+        st.subheader("📊 Market Share by Genre")
+        
+        # Add chart type toggle
+        chart_type = st.radio(
+            "Chart Type:",
+            ["Pie Chart", "Bar Chart"],
+            horizontal=True,
+            help="Choose visualization type for market share data"
+        )
+        
+        if chart_type == "Pie Chart":
+            market_fig = viz_generator.create_market_share_chart()
+            st.plotly_chart(market_fig, use_container_width=True)
+        else:
+            # Create bar chart alternative
+            market_fig = viz_generator.create_market_share_bar_chart()
+            st.plotly_chart(market_fig, use_container_width=True)
     
-    # Recent top performers
+    # Recent top performers with improved data and sorting
     st.subheader("🏆 Recent Top Performers")
     
     if not billboard_data.empty:
-        recent_data = billboard_data[pd.to_datetime(billboard_data['date']) >= 
-                                   (pd.to_datetime(billboard_data['date'].max()) - timedelta(weeks=4))]
+        # Get the most recent date for context
+        latest_date = pd.to_datetime(billboard_data['date'].max())
+        st.markdown(f'<div class="tooltip">📅 As of latest chart update: {latest_date.strftime("%B %d, %Y")}</div>', unsafe_allow_html=True)
         
-        top_songs = recent_data[recent_data['rank'] <= 10][['rank', 'title', 'artist', 'genre']].head(10)
-        st.dataframe(top_songs, use_container_width=True)
+        # Get recent data (last 4 weeks)
+        recent_data = billboard_data[pd.to_datetime(billboard_data['date']) >= 
+                                   (latest_date - timedelta(weeks=4))]
+        
+        if not recent_data.empty:
+            # Get top 10 songs by rank (best performers)
+            top_songs = recent_data.nsmallest(10, 'rank')[['rank', 'title', 'artist', 'genre', 'date']].copy()
+            
+            # Format the date column
+            top_songs['date'] = pd.to_datetime(top_songs['date']).dt.strftime('%Y-%m-%d')
+            
+            # Rename columns for clarity
+            top_songs.columns = ['Chart Rank', 'Song Title', 'Artist', 'Genre', 'Chart Date']
+            
+            # Make the dataframe sortable
+            st.dataframe(
+                top_songs,
+                use_container_width=True,
+                column_config={
+                    "Chart Rank": st.column_config.NumberColumn(
+                        "Chart Rank",
+                        help="Position on Billboard Hot 100 (1 = #1 hit)",
+                        format="%d"
+                    ),
+                    "Song Title": st.column_config.TextColumn(
+                        "Song Title",
+                        help="Name of the song"
+                    ),
+                    "Artist": st.column_config.TextColumn(
+                        "Artist",
+                        help="Performing artist"
+                    ),
+                    "Genre": st.column_config.TextColumn(
+                        "Genre",
+                        help="Music genre classification"
+                    ),
+                    "Chart Date": st.column_config.TextColumn(
+                        "Chart Date",
+                        help="Date of chart appearance"
+                    )
+                }
+            )
+        else:
+            st.info("No recent chart data available for the selected time period.")
+    else:
+        st.info("No data available for analysis.")
 
 def show_genre_analysis_tab(billboard_data, genre_analyzer, audio_analyzer, artist_analyzer):
     """Display genre analysis."""
