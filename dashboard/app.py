@@ -142,6 +142,28 @@ def main():
     # Sidebar
     st.sidebar.title("📊 Dashboard Controls")
     
+    # Export functionality
+    st.sidebar.subheader("📤 Export Data")
+    if st.sidebar.button("Export Analysis Report", help="Download current analysis as CSV"):
+        # Create a summary report
+        if not billboard_data.empty:
+            summary_data = {
+                'Metric': ['Total Songs', 'Unique Artists', 'Genres Analyzed', 'Date Range'],
+                'Value': [
+                    len(billboard_data),
+                    billboard_data['artist'].nunique(),
+                    billboard_data['genre'].nunique(),
+                    f"{billboard_data['date'].min().strftime('%Y-%m-%d')} to {billboard_data['date'].max().strftime('%Y-%m-%d')}"
+                ]
+            }
+            summary_df = pd.DataFrame(summary_data)
+            st.sidebar.download_button(
+                label="Download Summary",
+                data=summary_df.to_csv(index=False),
+                file_name="music_analytics_summary.csv",
+                mime="text/csv"
+            )
+    
     # Global date range selector (syncs across all tabs)
     st.sidebar.subheader("📅 Date Range")
     if not billboard_data.empty:
@@ -198,6 +220,46 @@ def main():
         show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer)
 
 def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analyzer, audio_analyzer):
+    """Display overview tab with key metrics and insights."""
+    
+    # Key Performance Indicators
+    st.subheader("📊 Key Performance Indicators")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        total_songs = len(billboard_data) if not billboard_data.empty else 0
+        st.metric(
+            label="Total Songs Analyzed",
+            value=f"{total_songs:,}",
+            help="Number of unique songs in the dataset"
+        )
+    
+    with col2:
+        unique_artists = billboard_data['artist'].nunique() if not billboard_data.empty else 0
+        st.metric(
+            label="Unique Artists",
+            value=f"{unique_artists:,}",
+            help="Number of distinct artists in the dataset"
+        )
+    
+    with col3:
+        genres_analyzed = billboard_data['genre'].nunique() if not billboard_data.empty else 0
+        st.metric(
+            label="Genres Tracked",
+            value=f"{genres_analyzed}",
+            help="Number of music genres analyzed"
+        )
+    
+    with col4:
+        avg_rank = billboard_data['rank'].mean() if not billboard_data.empty else 0
+        st.metric(
+            label="Average Chart Rank",
+            value=f"{avg_rank:.1f}",
+            help="Mean position on Billboard Hot 100"
+        )
+    
+    st.markdown("---")
     """Display overview dashboard."""
     
     st.header("📊 Market Overview")
