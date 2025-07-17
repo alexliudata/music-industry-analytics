@@ -145,8 +145,9 @@ def main():
     # Export functionality
     st.sidebar.subheader("📤 Export Data")
     if st.sidebar.button("Export Analysis Report", help="Download current analysis as CSV"):
-        # Create a summary report
+        # Create a comprehensive report
         if not billboard_data.empty:
+            # Summary metrics
             summary_data = {
                 'Metric': ['Total Songs', 'Unique Artists', 'Genres Analyzed', 'Date Range'],
                 'Value': [
@@ -157,12 +158,38 @@ def main():
                 ]
             }
             summary_df = pd.DataFrame(summary_data)
-            st.sidebar.download_button(
-                label="Download Summary",
-                data=summary_df.to_csv(index=False),
-                file_name="music_analytics_summary.csv",
-                mime="text/csv"
-            )
+            
+            # Artist performance data
+            artist_performance = artist_analyzer.analyze_artist_performance()
+            if not artist_performance.empty:
+                artist_df = artist_performance[['artist', 'total_songs', 'avg_rank', 'best_rank', 'momentum', 'genre_diversity']].copy()
+                artist_df.columns = ['Artist', 'Total Chart Appearances', 'Average Rank', 'Best Rank', 'Momentum Score', 'Genre Diversity']
+            else:
+                artist_df = pd.DataFrame()
+            
+            # Combine data for export
+            if not artist_df.empty:
+                # Create a comprehensive report
+                report_data = {
+                    'Section': ['Summary'] * len(summary_df) + ['Artist Performance'] * len(artist_df),
+                    'Metric': list(summary_df['Metric']) + list(artist_df.columns),
+                    'Value': list(summary_df['Value']) + [artist_df.iloc[i].tolist() for i in range(len(artist_df))]
+                }
+                report_df = pd.DataFrame(report_data)
+                
+                st.sidebar.download_button(
+                    label="Download Full Report",
+                    data=report_df.to_csv(index=False),
+                    file_name="music_analytics_report.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.sidebar.download_button(
+                    label="Download Summary",
+                    data=summary_df.to_csv(index=False),
+                    file_name="music_analytics_summary.csv",
+                    mime="text/csv"
+                )
     
     # Global date range selector (syncs across all tabs)
     st.sidebar.subheader("📅 Date Range")
@@ -220,46 +247,6 @@ def main():
         show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer)
 
 def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analyzer, audio_analyzer):
-    """Display overview tab with key metrics and insights."""
-    
-    # Key Performance Indicators
-    st.subheader("📊 Key Performance Indicators")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        total_songs = len(billboard_data) if not billboard_data.empty else 0
-        st.metric(
-            label="Total Songs Analyzed",
-            value=f"{total_songs:,}",
-            help="Number of unique songs in the dataset"
-        )
-    
-    with col2:
-        unique_artists = billboard_data['artist'].nunique() if not billboard_data.empty else 0
-        st.metric(
-            label="Unique Artists",
-            value=f"{unique_artists:,}",
-            help="Number of distinct artists in the dataset"
-        )
-    
-    with col3:
-        genres_analyzed = billboard_data['genre'].nunique() if not billboard_data.empty else 0
-        st.metric(
-            label="Genres Tracked",
-            value=f"{genres_analyzed}",
-            help="Number of music genres analyzed"
-        )
-    
-    with col4:
-        avg_rank = billboard_data['rank'].mean() if not billboard_data.empty else 0
-        st.metric(
-            label="Average Chart Rank",
-            value=f"{avg_rank:.1f}",
-            help="Mean position on Billboard Hot 100"
-        )
-    
-    st.markdown("---")
     """Display overview dashboard."""
     
     st.header("📊 Market Overview")
@@ -417,11 +404,15 @@ def show_artist_analysis_tab(billboard_data, artist_analyzer, genre_analyzer, au
         )
         
         top_artists = artist_analyzer.get_top_artists(selected_metric, 10)
+        
+        # Clarify genre diversity metric
+        st.markdown('<div class="tooltip">🎭 Genre Diversity: Number of different genres an artist has charted in (1 = single genre, higher = more diverse)</div>', unsafe_allow_html=True)
+        
         st.dataframe(top_artists[['artist', selected_metric, 'genre_diversity']], use_container_width=True)
         
-        # Rising artists with explanation
+        # Rising artists with context line
         st.subheader("📈 Rising Artists")
-        st.markdown('<div class="tooltip">🚀 Artists with improving recent performance vs. overall average</div>', unsafe_allow_html=True)
+        st.markdown('<div class="tooltip">🚀 Artists demonstrating above-average performance growth in the past 6 months based on synthetic chart data</div>', unsafe_allow_html=True)
         
         rising_artists = artist_analyzer.get_rising_artists()
         
@@ -434,8 +425,10 @@ def show_artist_analysis_tab(billboard_data, artist_analyzer, genre_analyzer, au
         else:
             st.info("No rising artists identified in the current data.")
         
-        # Artist performance visualization
+        # Artist performance visualization with improved labels
         st.subheader("📊 Artist Performance Scatter Plot")
+        st.markdown('<div class="tooltip">💡 Hover over points to see artist details, momentum score, and performance metrics</div>', unsafe_allow_html=True)
+        
         viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
         artist_fig = viz_generator.create_artist_performance_chart()
         st.plotly_chart(artist_fig, use_container_width=True)

@@ -596,28 +596,35 @@ class VisualizationGenerator:
         
         fig = go.Figure()
         
+        # Enhanced hover template with more details
+        hover_template = (
+            '<b>%{text}</b><br>' +
+            'Total Billboard Chart Appearances: %{x}<br>' +
+            'Average Billboard Chart Rank: %{y:.1f}<br>' +
+            'Momentum Score: %{marker.color:.1f}<br>' +
+            'Average Weeks on Chart: %{marker.size:.1f}<br>' +
+            '<extra></extra>'
+        )
+        
         fig.add_trace(go.Scatter(
             x=self.artist_analyzer.artist_performance['total_songs'],
             y=self.artist_analyzer.artist_performance['avg_rank'],
             mode='markers',
             text=self.artist_analyzer.artist_performance['artist'],
-            hovertemplate='<b>%{text}</b><br>' +
-                         'Total Songs: %{x}<br>' +
-                         'Avg Rank: %{y:.1f}<br>' +
-                         '<extra></extra>',
+            hovertemplate=hover_template,
             marker=dict(
                 size=self.artist_analyzer.artist_performance['avg_weeks'],
                 color=self.artist_analyzer.artist_performance['momentum'],
                 colorscale='RdYlGn',
                 showscale=True,
-                colorbar=dict(title='Momentum')
+                colorbar=dict(title='Momentum Score')
             )
         ))
         
         fig.update_layout(
             title='Artist Performance Analysis',
-            xaxis_title='Total Songs on Charts',
-            yaxis_title='Average Rank (Lower is Better)',
+            xaxis_title='Total Billboard Chart Appearances',
+            yaxis_title='Average Billboard Chart Rank (Lower = Better)',
             yaxis_autorange='reversed',
             height=500
         )
