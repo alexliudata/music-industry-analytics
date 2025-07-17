@@ -523,13 +523,13 @@ class VisualizationGenerator:
                 self.genre_analyzer.genre_trends['genre'] == genre
             ]
             
-            # Add smoothing with 4-week rolling average
-            genre_data_smooth = genre_data.copy()
-            genre_data_smooth['rolling_avg_rank'] = genre_data_smooth['rolling_avg_rank'].rolling(window=4, min_periods=1).mean()
+            # Add 4-week rolling average for smoothing
+            genre_data = genre_data.sort_values('date')
+            genre_data['smoothed_rank'] = genre_data['rolling_avg_rank'].rolling(window=4, min_periods=1).mean()
             
             fig.add_trace(go.Scatter(
-                x=genre_data_smooth['date'],
-                y=genre_data_smooth['rolling_avg_rank'],
+                x=genre_data['date'],
+                y=genre_data['smoothed_rank'],
                 mode='lines+markers',
                 name=genre,
                 hovertemplate=f'<b>{genre}</b><br>' +
@@ -572,54 +572,23 @@ class VisualizationGenerator:
         recent_data = self.genre_analyzer.genre_trends.groupby('genre').tail(4)
         market_share = recent_data.groupby('genre')['market_share'].mean().sort_values(ascending=False)
         
+        # Calculate song counts for each genre
+        song_counts = recent_data.groupby('genre').size()
+        
         fig = go.Figure(data=[go.Pie(
             labels=market_share.index,
             values=market_share.values,
             hole=0.3,
             hovertemplate='<b>%{label}</b><br>' +
                          'Market Share: %{percent}<br>' +
-                         'Total Songs: %{value:.0f}<br>' +
-                         '<extra></extra>'
+                         'Song Count: %{customdata}<br>' +
+                         '<extra></extra>',
+            customdata=[song_counts.get(genre, 0) for genre in market_share.index]
         )])
         
         fig.update_layout(
             title='Current Market Share by Genre',
             height=400
-        )
-        
-        return fig
-    
-    def create_market_share_bar_chart(self) -> go.Figure:
-        """
-        Create market share bar chart.
-        
-        Returns:
-            Plotly figure with market share as bar chart
-        """
-        if self.genre_analyzer.genre_trends is None:
-            self.genre_analyzer.analyze_genre_trends()
-        
-        # Get recent market share data
-        recent_data = self.genre_analyzer.genre_trends.groupby('genre').tail(4)
-        market_share = recent_data.groupby('genre')['market_share'].mean().sort_values(ascending=True)
-        
-        fig = go.Figure(data=[go.Bar(
-            x=market_share.values,
-            y=market_share.index,
-            orientation='h',
-            hovertemplate='<b>%{y}</b><br>' +
-                         'Market Share: %{x:.1%}<br>' +
-                         'Total Songs: %{x:.0f}<br>' +
-                         '<extra></extra>',
-            marker_color='#1f77b4'
-        )])
-        
-        fig.update_layout(
-            title='Current Market Share by Genre',
-            xaxis_title='Market Share (%)',
-            yaxis_title='Genre',
-            height=400,
-            xaxis=dict(tickformat='.1%')
         )
         
         return fig
