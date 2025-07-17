@@ -291,13 +291,22 @@ class SampleDataGenerator:
             for rank in range(1, min(num_songs + 1, len(weekly_songs) + 1)):
                 song, artist, genre = weekly_songs[rank - 1]
                 
-                # Realistic weeks on chart based on rank and genre
+                # Realistic weeks on chart based on rank and genre (with some noise)
                 if rank <= 10:
                     weeks_on_chart = random.randint(8, 25)  # Top hits stay longer
+                    # Add some outliers - not every top song is a mega-hit
+                    if random.random() < 0.15:  # 15% chance of shorter stay
+                        weeks_on_chart = random.randint(3, 7)
                 elif rank <= 50:
                     weeks_on_chart = random.randint(3, 15)  # Mid-chart songs
+                    # Add some surprise hits that stay longer
+                    if random.random() < 0.08:  # 8% chance of longer stay
+                        weeks_on_chart = random.randint(16, 22)
                 else:
                     weeks_on_chart = random.randint(1, 8)   # Lower chart songs
+                    # Add some one-hit wonders that spike briefly
+                    if random.random() < 0.05:  # 5% chance of brief spike
+                        weeks_on_chart = random.randint(9, 12)
                 
                 data.append({
                     'rank': rank,
@@ -397,6 +406,10 @@ class SampleDataGenerator:
                     danceability = random.uniform(0.4, 0.7)
                     energy = random.uniform(0.5, 0.8)
                     valence = random.uniform(0.3, 0.6)
+                    # Add some genre-blending - alternative can be quite varied
+                    if random.random() < 0.2:  # 20% chance of more pop-like features
+                        danceability = random.uniform(0.6, 0.8)
+                        energy = random.uniform(0.6, 0.9)
                     tempo = random.uniform(80, 120)
                     acousticness = random.uniform(0.2, 0.6)
                     instrumentalness = random.uniform(0.1, 0.3)

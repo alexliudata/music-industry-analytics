@@ -6,35 +6,35 @@
 
 ## 📊 Project Overview
 
-This comprehensive music industry analytics platform provides data-driven insights to help artists, labels, and industry professionals make informed strategic decisions. By analyzing Billboard Hot 100 data and Spotify audio features, the platform identifies emerging genre trends, artist performance patterns, and actionable business opportunities.
+This music industry analytics platform helps artists, labels, and industry professionals understand market trends and make better decisions. It analyzes Billboard Hot 100 data and Spotify audio features to spot which genres are gaining traction and which artists are on the rise.
 
 **Note:** This project uses simulated data modeled to reflect known industry patterns and Billboard chart dynamics. The momentum calculations, market share analysis, and audio feature correlations are approximations based on realistic music industry trends.
 
-## 🎯 Business Impact
+## 🎯 Who This Helps
 
-### For A&R Executives
-- **Artist Discovery**: Identify emerging genres with growth potential for new signings
-- **Performance Analysis**: Analyze artist performance patterns within specific genres
-- **Trend Spotting**: Spot under-the-radar trends before they become mainstream
-- **Portfolio Strategy**: Balance investments across emerging and stable genres
+### For A&R Teams
+- **Scouting**: Find which genres are heating up for new signings
+- **Performance Tracking**: See how artists perform within their genre
+- **Early Warning**: Catch trends before they hit mainstream
+- **Portfolio Balance**: Spread investments across growing vs stable genres
 
-### For Label Managers
-- **Marketing Allocation**: Adjust marketing spend based on genre performance trends
-- **Release Optimization**: Optimize release schedules for maximum chart impact
-- **Risk Management**: Monitor market concentration and genre decline risks
-- **Market Gaps**: Identify opportunities for new releases in growing segments
+### For Label Management
+- **Budget Decisions**: Shift marketing money to genres that are trending up
+- **Release Planning**: Time album drops when genres are peaking
+- **Risk Monitoring**: Watch for genres that might be fading
+- **Gap Analysis**: Find underserved market segments
 
-### For Marketing Analysts
-- **Campaign Targeting**: Target campaigns toward growing market segments
-- **Audio Optimization**: Understand audio feature preferences by genre
-- **Competitive Intelligence**: Track competitive landscape and market share shifts
-- **ROI Optimization**: Allocate budgets based on genre momentum
+### For Marketing Teams
+- **Campaign Focus**: Target ads to genres with momentum
+- **Sound Optimization**: Learn what audio qualities work by genre
+- **Competitor Tracking**: See market share shifts in real-time
+- **Budget Efficiency**: Put money where trends are strongest
 
 ### For Artists
-- **Genre Strategy**: Identify emerging genres for artistic experimentation
-- **Audio Features**: Understand what audio characteristics drive popularity
-- **Market Timing**: Time releases to capitalize on genre momentum
-- **Collaboration Opportunities**: Discover rising artists for potential partnerships
+- **Genre Pivots**: Know when to experiment with trending sounds
+- **Sound Design**: Understand what audio features drive success
+- **Release Timing**: Drop music when your genre is hot
+- **Collaborations**: Find rising artists in complementary genres
 
 ## 🏗️ Project Structure
 
@@ -84,6 +84,27 @@ streamlit run app.py
 ```
 
 The dashboard will open at `http://localhost:8501`
+
+## ⚠️ Known Limitations & Future Enhancements
+
+### Current Limitations
+- **Data Source**: Uses simulated data - real Billboard scraping would require API access
+- **Audio Features**: Limited to basic Spotify features (danceability, energy, etc.)
+- **Time Range**: Currently analyzes 52 weeks - longer periods would provide better trends
+- **Genre Classification**: Simplified genre categories - real industry uses more granular classifications
+
+### Planned Enhancements
+- [ ] **Real-time Data**: Integrate with Billboard API for live chart data
+- [ ] **Advanced Audio Analysis**: Include more sophisticated audio feature extraction
+- [ ] **Social Media Integration**: Add Twitter/Instagram sentiment analysis
+- [ ] **Predictive Modeling**: Implement ML models for trend forecasting
+- [ ] **Export Functionality**: Add PDF report generation for stakeholders
+
+### Technical Debt
+- [ ] **Performance**: Optimize for larger datasets (currently limited to ~1000 songs)
+- [ ] **Caching**: Implement better caching strategy for real-time updates
+- [ ] **Testing**: Add comprehensive unit tests (currently ~60% coverage)
+- [ ] **Documentation**: Expand API documentation for custom analysis
 
 ## 📈 Key Features
 

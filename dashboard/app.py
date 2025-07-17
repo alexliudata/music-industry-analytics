@@ -448,6 +448,9 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
     st.subheader("📊 Market Insights Summary")
     st.markdown('<div class="tooltip">📈 Based on Billboard chart performance analysis over time</div>', unsafe_allow_html=True)
     
+    # Add realistic data quality note
+    st.info("💡 **Data Note**: Analysis based on simulated data with realistic industry patterns. Real-world implementation would require Billboard API access and live data feeds.")
+    
     # Compact badges for emerging/declining genres
     emerging_count = len(market_insights['genre_insights'].get('emerging_genres', []))
     declining_count = len(market_insights['genre_insights'].get('declining_genres', []))
