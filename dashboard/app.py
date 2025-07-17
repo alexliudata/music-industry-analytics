@@ -309,6 +309,12 @@ def show_genre_analysis_tab(billboard_data, genre_analyzer, audio_analyzer, arti
         else:
             st.info("No declining genres identified in the current data.")
     
+    # Genre trend visualization
+    st.subheader("📈 Genre Performance Trends")
+    viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
+    trend_fig = viz_generator.create_genre_trend_chart()
+    st.plotly_chart(trend_fig, use_container_width=True)
+    
     # Genre insights with clarified metrics
     st.subheader("📊 Genre Insights")
     genre_insights = genre_analyzer.get_genre_insights()
@@ -326,17 +332,6 @@ def show_genre_analysis_tab(billboard_data, genre_analyzer, audio_analyzer, arti
         st.markdown('<div class="tooltip">📊 Percentage of total chart entries by genre</div>', unsafe_allow_html=True)
         for genre, share in list(genre_insights.get('market_leaders', {}).items())[:5]:
             st.write(f"• {genre}: {share:.1%}")
-    
-                # Genre trend visualization
-    st.subheader("📈 Genre Performance Trends")
-    
-    # Use full width container
-    with st.container():
-        viz_generator = VisualizationGenerator(genre_analyzer, artist_analyzer, audio_analyzer)
-        trend_fig = viz_generator.create_genre_trend_chart()
-        
-        # Force full width and better layout
-        st.plotly_chart(trend_fig, use_container_width=True, config={'displayModeBar': True})
 
 def show_artist_analysis_tab(billboard_data, artist_analyzer, genre_analyzer, audio_analyzer):
     """Display artist analysis."""
@@ -451,26 +446,18 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
     
     # Market insights summary
     st.subheader("📊 Market Insights Summary")
+    st.markdown('<div class="tooltip">📈 Based on Billboard chart performance analysis over time</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    # Compact badges for emerging/declining genres
+    emerging_count = len(market_insights['genre_insights'].get('emerging_genres', []))
+    declining_count = len(market_insights['genre_insights'].get('declining_genres', []))
     
-    with col1:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric(
-            label="Emerging Genres",
-            value=len(market_insights['genre_insights'].get('emerging_genres', [])),
-            delta=None
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric(
-            label="Declining Genres",
-            value=len(market_insights['genre_insights'].get('declining_genres', [])),
-            delta=None
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f'''
+    <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
+        <span style="background-color: #28a745; color: white; padding: 0.5rem 1.2rem; border-radius: 1rem; font-weight: bold; font-size: 1.1rem;">Emerging Genres: {emerging_count}</span>
+        <span style="background-color: #ffc107; color: #333; padding: 0.5rem 1.2rem; border-radius: 1rem; font-weight: bold; font-size: 1.1rem;">Declining Genres: {declining_count}</span>
+    </div>
+    ''', unsafe_allow_html=True)
     
     # Strategic recommendations with backing metrics
     st.subheader("🎯 Strategic Recommendations")
@@ -508,6 +495,14 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
                         metrics_text += f"<br>• <strong>{artist['artist']}</strong>: {momentum_text}"
                     
                     rec['description'] += metrics_text
+            
+            # Vary recommendation language to avoid repetition
+            if 'developing artists' in rec['action']:
+                rec['action'] = rec['action'].replace('Consider developing artists in these genres or collaborating with existing artists', 
+                                                     'Explore signing new talent or building joint projects in these trending genres')
+            elif 'reducing exposure' in rec['action']:
+                rec['action'] = rec['action'].replace('Consider reducing exposure to declining genres', 
+                                                     'Reduce overexposure in fading genres while reallocating marketing spend to growth areas')
             
             st.markdown(f'''
             <div class="{priority_color}">

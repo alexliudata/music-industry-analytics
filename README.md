@@ -8,6 +8,8 @@
 
 This comprehensive music industry analytics platform provides data-driven insights to help artists, labels, and industry professionals make informed strategic decisions. By analyzing Billboard Hot 100 data and Spotify audio features, the platform identifies emerging genre trends, artist performance patterns, and actionable business opportunities.
 
+**Note:** This project uses simulated data modeled to reflect known industry patterns and Billboard chart dynamics. The momentum calculations, market share analysis, and audio feature correlations are approximations based on realistic music industry trends.
+
 ## 🎯 Business Impact
 
 ### For A&R Executives
