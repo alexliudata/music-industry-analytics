@@ -521,9 +521,12 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
     recommendations = insights_generator.generate_strategic_recommendations()
     risks = insights_generator.generate_risk_assessment()
     
-    # Market insights summary
+    # Market insights summary with momentum definition
     st.subheader("📊 Market Insights Summary")
     st.markdown('<div class="tooltip">📈 Based on Billboard chart performance analysis over time</div>', unsafe_allow_html=True)
+    
+    # Add momentum definition
+    st.markdown('<div class="tooltip">📊 **Momentum** = change in average Billboard rank over time; positive = improving, negative = declining</div>', unsafe_allow_html=True)
     
     # Add realistic data quality note
     st.info("💡 **Data Note**: Analysis based on simulated data with realistic industry patterns. Real-world implementation would require Billboard API access and live data feeds.")
@@ -556,20 +559,29 @@ def show_business_insights_tab(genre_analyzer, artist_analyzer, audio_analyzer):
                 if emerging_genres:
                     genre_trends = genre_analyzer.analyze_genre_trends()
                     metrics_text = ""
-                    for genre in emerging_genres[:3]:  # Show top 3
-                        if not genre_trends.empty:
+                    # Only include genres that actually have data
+                    valid_genres = []
+                    for genre in emerging_genres:
+                        if not genre_trends.empty and genre in genre_trends['genre'].values:
                             recent_momentum = genre_trends[genre_trends['genre'] == genre]['momentum'].tail(4).mean()
                             market_share = genre_trends[genre_trends['genre'] == genre]['market_share'].tail(4).mean()
                             metrics_text += f"<br>• <strong>{genre}</strong>: ↑{abs(recent_momentum):.1f} momentum, {market_share:.1%} market share"
+                            valid_genres.append(genre)
                     
-                    if metrics_text:
+                    # Update description to only mention genres with supporting data
+                    if valid_genres:
+                        rec['description'] = rec['description'].replace(
+                            f'Genres showing positive momentum: {", ".join(emerging_genres)}',
+                            f'Genres showing positive momentum: {", ".join(valid_genres)}'
+                        )
                         rec['description'] += f"<br><br><strong>Supporting Data:</strong>{metrics_text}"
             
-            # Add backing metrics for rising artists recommendation
+            # Add backing metrics for rising artists recommendation with synthetic data note
             elif 'rising' in rec['title'].lower() and 'artist' in rec['title'].lower():
                 rising_artists = artist_analyzer.get_rising_artists()
                 if not rising_artists.empty:
                     metrics_text = "<br><br><strong>Top Rising Artists:</strong>"
+                    metrics_text += "<br><em>Note: Based on simulated data for illustrative purposes</em>"
                     for _, artist in rising_artists.head(3).iterrows():
                         momentum_text = f"↑{artist['momentum']:.1f} rank improvement" if artist['momentum'] > 0 else f"↓{abs(artist['momentum']):.1f} rank decline"
                         metrics_text += f"<br>• <strong>{artist['artist']}</strong>: {momentum_text}"
