@@ -518,11 +518,7 @@ class VisualizationGenerator:
         
         fig = go.Figure()
         
-        # Define a color palette for better distinction
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
-                 '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-        
-        for i, genre in enumerate(self.genre_analyzer.genre_trends['genre'].unique()):
+        for genre in self.genre_analyzer.genre_trends['genre'].unique():
             genre_data = self.genre_analyzer.genre_trends[
                 self.genre_analyzer.genre_trends['genre'] == genre
             ]
@@ -532,8 +528,6 @@ class VisualizationGenerator:
                 y=genre_data['rolling_avg_rank'],
                 mode='lines+markers',
                 name=genre,
-                line=dict(width=3),  # Thicker lines for better visibility
-                marker=dict(size=6),  # Larger markers
                 hovertemplate=f'<b>{genre}</b><br>' +
                              'Date: %{x}<br>' +
                              'Avg Rank: %{y:.1f}<br>' +
@@ -546,33 +540,15 @@ class VisualizationGenerator:
             yaxis_title='Average Rank (Lower is Better)',
             yaxis_autorange='reversed',
             hovermode='x unified',
-            height=600,  # Increased height for better spacing
-            width=None,  # Let it be responsive
-            margin=dict(l=80, r=80, t=80, b=80),  # Better margins
+            height=500
+            autosize=True,  # Allow auto-sizing for full width
+            margin=dict(l=50, r=50, t=80, b=50),  # Better margins
             legend=dict(
-                orientation="v",
-                yanchor="top",
-                y=0.99,
-                xanchor="left",
-                x=1.02,
-                bgcolor='rgba(255,255,255,0.8)',
-                bordercolor='rgba(0,0,0,0.2)',
-                borderwidth=1
-            ),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            xaxis=dict(
-                showgrid=True,
-                gridwidth=1,
-                gridcolor='rgba(128,128,128,0.2)',
-                zeroline=False
-            ),
-            yaxis=dict(
-                showgrid=True,
-                gridwidth=1,
-                gridcolor='rgba(128,128,128,0.2)',
-                zeroline=False,
-                range=[genre_data['rolling_avg_rank'].max() + 5, genre_data['rolling_avg_rank'].min() - 5]  # Add padding
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
             )
         )
         
