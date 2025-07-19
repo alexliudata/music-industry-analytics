@@ -322,7 +322,7 @@ def show_overview_tab(billboard_data, spotify_data, genre_analyzer, artist_analy
         
         # Get top 10 songs and sort by rank
         top_songs = recent_data[recent_data['rank'] <= 10][['rank', 'title', 'artist', 'genre']].head(10)
-        top_songs = top_songs.sort_values('rank')  # Sort by rank (1-10)
+        top_songs = top_songs.sort_values('rank').reset_index(drop=True)  # Sort by rank (1-10) and reset index
         
         # Display as a clean table
         st.dataframe(
