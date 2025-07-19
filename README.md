@@ -109,7 +109,7 @@ The dashboard will open at `http://localhost:8501`
 ### Technical Debt
 - [ ] **Performance**: Optimize for larger datasets (currently limited to ~1000 songs)
 - [ ] **Caching**: Implement better caching strategy for real-time updates
-- [ ] **Testing**: Add comprehensive unit tests (currently ~60% coverage)
+- [ ] **Testing**: Add comprehensive unit tests
 - [ ] **Documentation**: Expand API documentation for custom analysis
 
 ## 📈 Key Features
@@ -358,22 +358,7 @@ CMD ["streamlit", "run", "dashboard/app.py"]
 - Advanced visualization options
 - API development for external access
 
-## 📊 Business Case Studies
 
-### Case Study 1: Genre Diversification
-**Challenge**: Major label with 80% pop music portfolio
-**Solution**: Identified emerging K-Pop and Latin trends
-**Result**: 25% increase in market share through strategic signings
-
-### Case Study 2: Artist Development
-**Challenge**: Independent artist seeking genre direction
-**Solution**: Audio feature analysis for target genre optimization
-**Result**: 40% improvement in streaming performance
-
-### Case Study 3: Risk Management
-**Challenge**: Label overexposed to declining rock genre
-**Solution**: Market concentration risk assessment
-**Result**: Successful portfolio rebalancing and risk mitigation
 
 ## 🔮 Future Enhancements
 
